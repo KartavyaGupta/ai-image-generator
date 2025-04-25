@@ -36,6 +36,9 @@ const HoverOverlay = styled.div`
   border-radius: 6px;
   justify-content: space-between;
   padding: 12px;
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 const Prompt = styled.div`
   font-weight: 400;

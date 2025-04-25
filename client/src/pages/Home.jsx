@@ -1,11 +1,14 @@
+// src/pages/Home.jsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import SearchBar from "../components/searchBar/SearchBar";
 import { GetPosts } from "../api";
 import { CircularProgress } from "@mui/material";
+import Masonry from "@mui/lab/Masonry"; // ⟵ NEW
 import ImageCard from "../components/ImageCard/ImageCard";
+
 const Container = styled.div`
-  padding: 30px 30px;
+  padding: 30px;
   padding-bottom: 200px;
   height: 100%;
   overflow-y: scroll;
@@ -13,6 +16,7 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 20px;
+
   @media (max-width: 768px) {
     padding: 6px 10px;
   }
@@ -37,27 +41,14 @@ const Span = styled.div`
 const Wrapper = styled.div`
   width: 100%;
   max-width: 1400px;
-  padding: 32px 0px;
+  padding: 32px 0;
   display: flex;
   justify-content: center;
-  align-items: center;
 `;
 
-const CardWrapper = styled.div`
-  display: grid;
-  gap: 20px;
-
-  @media (min-width: 1200px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  @media (min-width: 640px) and (max-width: 1199px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (max-width: 639px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+// Masonry doesn’t need extra styling, but you can wrap/extend it if you like:
+const MasonryGrid = styled(Masonry)`
+  width: 100%;
 `;
 
 const Home = () => {
@@ -68,17 +59,16 @@ const Home = () => {
   const [filteredPost, setFilteredPost] = useState([]);
 
   const getPosts = async () => {
-    setLoading(true);
-    await GetPosts()
-      .then((res) => {
-        setPosts(res?.data?.data);
-        setFilteredPost(res?.data?.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error?.response?.data?.message);
-        setLoading(false);
-      });
+    try {
+      setLoading(true);
+      const res = await GetPosts();
+      setPosts(res?.data?.data);
+      setFilteredPost(res?.data?.data);
+    } catch (err) {
+      setError(err?.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -88,17 +78,15 @@ const Home = () => {
   useEffect(() => {
     if (!search) {
       setFilteredPost(posts);
+      return;
     }
-    const filteredPosts = posts.filter((post) => {
-      const promptMatch = post?.prompt?.toLowerCase().includes(search);
-      const authorMatch = post?.author?.toLowerCase().includes(search);
-
-      return promptMatch || authorMatch;
-    });
-
-    if (search) {
-      setFilteredPost(filteredPosts);
-    }
+    const lower = search.toLowerCase();
+    const filtered = posts.filter(
+      (p) =>
+        p?.prompt?.toLowerCase().includes(lower) ||
+        p?.author?.toLowerCase().includes(lower)
+    );
+    setFilteredPost(filtered);
   }, [posts, search]);
 
   return (
@@ -107,29 +95,31 @@ const Home = () => {
         Explore popular posts in the Community!
         <Span>⦾ Generated with AI ⦾</Span>
       </HeadLine>
+
       <SearchBar
         search={search}
         handleChange={(e) => setSearch(e.target.value)}
       />
+
       <Wrapper>
         {error && <div style={{ color: "red" }}>{error}</div>}
+
         {loading ? (
           <CircularProgress />
+        ) : filteredPost.length ? (
+          <MasonryGrid
+            columns={{ xs: 2, sm: 3, lg: 4 }} // responsive column counts
+            spacing={2} // gap in px
+          >
+            {filteredPost
+              .slice() // keep original order intact
+              .reverse() // newest first
+              .map((item, i) => (
+                <ImageCard key={i} item={item} />
+              ))}
+          </MasonryGrid>
         ) : (
-          <CardWrapper>
-            {filteredPost.length > 0 ? (
-              <>
-                {filteredPost
-                  .slice()
-                  .reverse()
-                  .map((item, index) => (
-                    <ImageCard key={index} item={item} />
-                  ))}
-              </>
-            ) : (
-              <>No Posts Found !!</>
-            )}
-          </CardWrapper>
+          <>No Posts Found !!</>
         )}
       </Wrapper>
     </Container>
