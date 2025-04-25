@@ -1,3 +1,4 @@
+// TextInput.jsx
 import React from "react";
 import styled from "styled-components";
 
@@ -11,7 +12,7 @@ const Container = styled.div`
 const Label = styled.label`
   font-size: 12px;
   color: ${({ theme }) => theme.text_secondary};
-  padding: 0px 4px;
+  padding: 0 4px;
   text-transform: uppercase;
 `;
 
@@ -25,6 +26,7 @@ const OutlinedInput = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+
   &:focus-within {
     border-color: ${({ theme }) => theme.primary};
   }
@@ -37,6 +39,7 @@ const Input = styled.input`
   border: none;
   background-color: transparent;
   color: ${({ theme }) => theme.text_secondary};
+
   &:focus {
     outline: none;
   }
@@ -47,10 +50,10 @@ const TextInput = ({
   placeholder,
   name,
   value,
-  handelChange,
-  textArea,
-  rows,
-  columns,
+  handleChange, // <- the prop you pass in
+  textArea = false,
+  rows = 4,
+  cols = 30, // HTML expects "cols" if you decide to use it
 }) => {
   return (
     <Container>
@@ -59,11 +62,11 @@ const TextInput = ({
         <Input
           as={textArea ? "textarea" : "input"}
           name={name}
-          rows={rows}
-          columns={columns}
+          rows={textArea ? rows : undefined} // only set rows/cols for textarea
+          cols={textArea ? cols : undefined}
           placeholder={placeholder}
           value={value}
-          onChange={(e) => handelChange(e)}
+          onChange={handleChange} // <- typo fixed
         />
       </OutlinedInput>
     </Container>
